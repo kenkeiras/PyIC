@@ -1,6 +1,6 @@
 # -*- encoding: utf-8 -*-
 """
-   Simple irc client
+   Simple Python Irc Client library
 
    Copyright (c) 2010 kenkeiras <kenkeiras@gmail.com>
    Under GPLv3 license (or later)
@@ -26,6 +26,9 @@ VERSION = "PyIC 0.2"
 
 import socket
 
+def clean_usr( usr ):
+    return usr.replace( "@", "" )
+
 # Retrieve a single line from the socket
 def getline( sock ):
     l = ""
@@ -44,6 +47,14 @@ def getline( sock ):
 ########################################################################
 # Irc Client main class
 class irc_client:
+
+    motd = ""
+    msgBuff = []
+    
+    ####################################################################
+    # Shows Message Of The Day
+    def getMotd( self ):
+        return self.motd
 
     ####################################################################
     # Set's channel mode
@@ -75,18 +86,99 @@ class irc_client:
         self.sock.send( "PING " + to + "\r\n" )
 
     ####################################################################
+    # Collect's WHOIS/WHOWAS data
+    def collect_who_data( self ):
+
+        m = self.getmsg( True )
+        data = { 'channels': [ ] }
+        while ( m.type != RPL_ENDOFWHOWAS ) and \
+              ( m.type != RPL_ENDOFWHOIS  ) and \
+              ( m.type != ERR_NOSUCHNICK  ):
+                               
+            if ( m.type == RPL_WHOISUSER ):
+                 d = m.msg.split( ":" )
+                 data[ 'real_name' ] = d[ 1 ]
+                 
+                 d = d[ 0 ].split( " " )
+                 
+                 data[ 'nick' ] = d[ 0 ]
+                 data[ 'user' ] = d[ 1 ]
+                 data[ 'host' ] = d[ 2 ]
+                
+            elif ( m.type == RPL_WHOWASUSER ):
+                 d = m.msg.split( ":" )
+                 data[ 'real_name' ] = d[ 1 ]
+                 
+                 d = d[ 0 ].split( " " )
+                 
+                 data[ 'nick' ] = d[ 0 ]
+                 data[ 'user' ] = d[ 1 ]
+                 data[ 'host' ] = d[ 2 ]
+                
+            elif ( m.type == RPL_WHOISSERVER ): 
+                 d = m.msg.split( ":" )
+                 data[ 'server_info' ] = d[ 1 ]
+
+                 d = d[ 0 ].split( " " )
+                 
+                 data[ 'server' ] = d[ 1 ]
+
+            elif ( m.type == RPL_WHOISOPERATOR ): 
+                 data[ 'isOp' ] = True
+                
+            elif ( m.type == RPL_WHOISIDLE ): 
+                 d = m.msg.split( ":" )
+                 data[ 'idle' ] = d[ 1 ]
+
+                 d = d[ 0 ].split( " " )
+                 
+                 data[ 'time' ] = d[ 1 ]
+
+            elif ( m.type == RPL_WHOISCHANNELS ): 
+                 d = m.msg.split( ":" )
+                 data[ 'channels' ] += d[ 1 ].strip().split( " " )
+
+            else:
+                self.msgBuff.append( m )
+                
+            m = self.getmsg( True )
+            
+        return data
+
+    ####################################################################
     # Ask's for user information
-    def whois(self,
+    def send_whois(self,
               user ):
                   
-        self.sock.send( "WHOIS " + nick+"\r\n")
+        self.sock.send( "WHOIS " + user + "\r\n")
+
+    ####################################################################
+    # Reads for user information
+    def whois( self,
+               user ):
+                   
+        self.send_whois( user )
+        
+        data = self.collect_who_data( )
+           
+        return data
 
     ####################################################################
     # Ask's for user (that no longer exists) information
-    def whowas( self,
-                user ):
+    def send_whowas( self,
+                     user ):
                     
-        self.sock.send( "WHOWAS " + nick + "\r\n" )
+        self.sock.send( "WHOWAS " + user + "\r\n" )
+        
+    ####################################################################
+    # Reads for former user information
+    def whowas( self, 
+                user ):
+        self.send_whowas( user )
+        
+        data = self.collect_who_data( )
+        
+        return data
     
     ####################################################################
     # Set's a channel topic
@@ -105,10 +197,32 @@ class irc_client:
 
     ####################################################################
     # Retrieves a nick list
-    def get_names( self,
+    def retr_names( self,
                    channel ):
                        
         self.sock.send( "NAMES " + channel + "\r\n" )
+
+    ####################################################################
+    # Reads the nick list
+    def get_users( self,
+                   channel ):
+                       
+        self.retr_names( channel )
+        
+        data = []
+        m = self.getmsg( True )
+        
+        while ( m.type != RPL_ENDOFNAMES ):
+            
+            if ( m.type == RPL_NAMEREPLY ):
+                data += m.msg.split( ":" )[ -1 ].split( " " )
+                
+            else:
+                self.msgBuff.append( m )
+
+            m = self.getmsg( True )
+
+        return data
 
     ####################################################################
     # Retrieves a channel list
@@ -157,7 +271,7 @@ class irc_client:
               passwd = None ):
                   
         if ( channel[ 0 ] == "#" ):
-            channel = channel[1:]
+            channel = channel[ 1 : ]
 
         if ( passwd == None ):
             self.sock.send( "JOIN #" + channel + "\r\n" )
@@ -173,9 +287,18 @@ class irc_client:
         self.sock.send( "NICK " + nick + "\r\n" )
 
     ####################################################################
+    # Ask's for the MOTD
+    def refresh_motd( self ):
+        self.sock.send( "MOTD\r\n" )
+
+    ####################################################################
     # Receives a message (and transparently answers to server ping's)
-    def getmsg( self ):
+    def getmsg( self, fresh = False ):
+        if ( not fresh ) and ( len( self.msgBuff ) > 0 ):
+            return self.msgBuff.pop( 0 )
+
         while ( True ):
+            
             s = getline( self.sock )
             if ( len( s ) > 3 ):
                 if ( s.lower()[ 0:4 ] == "ping" ):
@@ -183,12 +306,20 @@ class irc_client:
                     continue
                
             m = irc_msg( s )
-            if ("version" in  m.ctcp_msg.lower()):
-                self.sendVer(m.by)
+
+            if ( "version" in  m.ctcp_msg.lower() ):
+                self.sendVer( m.by )
+                continue
+
+            elif ( m.type == RPL_MOTD ):
+                self.motd += m.msg + "\n"
+                continue
+
+            elif ( m.type == RPL_MOTDSTART ):
+                self.motd = ""
                 continue
 
             return m
-
 
     ####################################################################
     # Sends a message ( msg ) to a receiver ( to ), which can 
@@ -233,11 +364,15 @@ class irc_client:
             
             self.sock.send( "PASS " + serverpasswd + "\r\n" )
             
-        self.getmsg( )
         self.change_nick( self.nick )
         
+        m = self.getmsg( )
+
         self.sock.send( "USER " + self.username + " " + self.username2 +
                     " " + self.server + ": " + self.fullname + "\r\n" )
+
+        while ( m.type != RPL_ENDOFMOTD ):
+            m = self.getmsg( )
                     
         if ( passwd != None ):
             self.sendmsg( "NickServ", "IDENTIFY " + passwd )
@@ -260,4 +395,4 @@ class irc_client:
         self.username = username
         self.username2 = username2
         self.fullname = fullname
-        self.connect_to_server( passwd,serverpasswd )
+        self.connect_to_server( passwd, serverpasswd )

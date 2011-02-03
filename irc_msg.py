@@ -32,11 +32,14 @@ class irc_msg:
     multiline_end = False
     ctcp = False
     ctcp_msg = ""
+    raw = ""
     
     ####################################################################
     # Constructor
     def __init__( self,
                   s ):
+                      
+        self.raw = s
                       
         # Extracting "FROM"
         if ( s[ 0 ] == ":" ):

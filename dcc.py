@@ -14,7 +14,7 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.
 """
 
-import threading
+from threading import Thread
 import socket
 
 
@@ -28,7 +28,7 @@ def int2uint4( n ):
 
 ########################################################################
 # DCC download thread
-class dcc_download(threading.Thread):
+class dcc_download( Thread ):
     
     ####################################################################
     # Constructor
@@ -36,6 +36,8 @@ class dcc_download(threading.Thread):
                   msg,
                   func = None,
                   buffsize = 1024 ):
+
+        Thread.__init__( self )
                       
         self.buffsize = buffsize
         self.turbo = msg.turbo
@@ -45,7 +47,6 @@ class dcc_download(threading.Thread):
         self.func = func
         self.size = msg.size
 
-        threading.Thread.__init__( self )
 
 
     ####################################################################
