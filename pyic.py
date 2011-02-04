@@ -53,15 +53,15 @@ class irc_client:
     
     ####################################################################
     # Shows Message Of The Day
-    def getMotd( self ):
+    def get_motd( self ):
         return self.motd
 
     ####################################################################
     # Set's channel mode
     def set_chanmode( self,
                       channel,
-                       mode,
-                       data = None ):
+                      mode,
+                      data = None ):
                            
         if (data == None):
             self.sock.send( "MODE " + channel + " " + mode + "\r\n" )
@@ -147,8 +147,8 @@ class irc_client:
 
     ####################################################################
     # Ask's for user information
-    def send_whois(self,
-              user ):
+    def send_whois( self,
+                    user ):
                   
         self.sock.send( "WHOIS " + user + "\r\n")
 
@@ -186,19 +186,36 @@ class irc_client:
                    channel,
                    topic ):
                        
-        self.sock.send( "TOPIC " + channel + " " + topic + "\r\n" )
+        self.sock.send( "TOPIC " + channel + " :" + topic + "\r\n" )
 
     ####################################################################
     # Retrieves a channel topic (has to check messages then)
-    def get_topic( self,
-                   channel ):
+    def retr_topic( self,
+                    channel ):
                        
         self.sock.send( "TOPIC " + channel + "\r\n" )
 
     ####################################################################
+    # Reads the current topic on a channel
+    def get_topic( self,
+                   channel ):
+
+        self.retr_topic( channel )
+        while ( True ):
+            m = self.getmsg( True )
+            if ( m.type == RPL_TOPIC ):
+                return m.msg.split( ":" )[ -1 ]
+                
+            elif ( m.type == RPL_NOTOPIC ):
+                return False
+                
+            self.msgBuff.append( m )
+        
+
+    ####################################################################
     # Retrieves a nick list
     def retr_names( self,
-                   channel ):
+                    channel ):
                        
         self.sock.send( "NAMES " + channel + "\r\n" )
 
@@ -226,8 +243,37 @@ class irc_client:
 
     ####################################################################
     # Retrieves a channel list
-    def get_channels( self ):
+    def retr_channels( self ):
+        
         self.sock.send( "LIST\r\n" )
+            
+    ####################################################################
+    # Reads the channel list
+    def get_channels( self ):
+        self.retr_channels( )
+        
+        channels = []
+        m = self.getmsg( True )
+        
+        while ( m.type != RPL_LISTEND ):
+            if ( m.type == RPL_LISTSTART ):
+                pass
+            
+            elif ( m.type == RPL_LIST ):
+                
+                if ( ":" in m.msg ):
+                    i = m.msg.index( ":" )
+                    topic = m.msg[ i + 1 : ]
+                    d = m.msg[ : i ].strip( ).split( " " )
+                    if ( len( d ) > 1 ):
+                        channels.append( ( d[ 0 ], d[ 1 ], topic ) )
+                 
+            else:
+                self.msgBuff.append( m )
+                
+            m = self.getmsg( True )
+            
+        return channels
 
     ####################################################################
     # Invites someone to a channel
@@ -255,12 +301,14 @@ class irc_client:
     # Quit the channel
     def quit_channel( self,
                       channel ):
+                          
         self.sock.send( "PART " + channel + "\r\n" )
 
     ####################################################################
     # Quit's the server
     def quit( self,
               msg = "Client quit" ):
+                  
         self.sock.send( "QUIT :" + str( msg ) + "\r\n" )
         self.sock.close( )
 
@@ -293,7 +341,9 @@ class irc_client:
 
     ####################################################################
     # Receives a message (and transparently answers to server ping's)
-    def getmsg( self, fresh = False ):
+    def getmsg( self,
+                fresh = False ):
+                    
         if ( not fresh ) and ( len( self.msgBuff ) > 0 ):
             return self.msgBuff.pop( 0 )
 
@@ -327,6 +377,7 @@ class irc_client:
     def sendmsg( self,
                  to,
                  msg ):
+                     
         self.sock.send("PRIVMSG "+to+" :"+msg+"\r\n")
 
     ####################################################################
@@ -348,6 +399,7 @@ class irc_client:
     # Answers a version request
     def sendVer( self,
                  by ):
+                     
         self.notice( by, chr( 1 ) + VERSION + chr( 1 ) )
 
     ####################################################################
