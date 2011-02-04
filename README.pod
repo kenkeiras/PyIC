@@ -1,4 +1,4 @@
-
+=begin html
 <b>Python IRC Client</b><br />
 
 To connect to the server, use <b>pyic.irc_client</b>, the object returned
