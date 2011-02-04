@@ -1,0 +1,97 @@
+
+<b>Python IRC Client</b><br />
+
+To connect to the server, use <b>pyic.irc_client</b>, the object returned
+controls the irc session.<br /><br />
+
+irc = pyic.irc_client(&nbsp;&nbsp;nick,<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;server,<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;port = 6667,<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;username = "user",<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;username2 = "user",<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;fullname = "user Name",<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;serverpasswd = None,<br />
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;passwd = None&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;)<br /><br />
+
+Connects to a server and creates a IRC session.<br /><br />
+
+<b>irc.get_motd</b>( )<br /><br />
+
+Returns the message of the day.<br /><br />
+
+<b>irc.refresh_motd</b>( )<br /><br />
+
+Ask for a new message of the day.<br /><br />
+
+
+<b>irc.join</b>( <u>channel</u>, <u>password</u> = None )<br /><br />
+
+Joins a channel.<br /><br />
+
+<b>irc.sendmsg</b>( <u>to</u> ,<u>message</u> )<br /><br />
+
+Sends a message to a user or channel.<br /><br />
+
+<b>irc.notice</b>( <u>to</u> ,<u>message</u> )<br /><br />
+
+Like sendmsg( ) but MUSN'T be automatically answered.<br /><br />
+
+<b>userlist = irc.get_users</b>( <u>channel</u> )<br /><br />
+
+Returns a list of users in a given channel.<br /><br />
+
+<b>irc.change_nick</b>( <u>nick</u> )<br /><br />
+
+Uses a new nick<br /><br />
+
+<b>irc.quit</b>( <u>msg</u> = "Client quit" )<br /><br />
+
+Quits the server with a message.<br /><br />
+
+<b>irc.quit_channel</b>( <u>channel</u> )<br /><br />
+
+Quits the channel.<br /><br />
+
+<b>irc.kick</b>( <u>channel</u>, <u>nick</u>, <u>comment</u> = None )<br /><br />
+
+Kicks someone from a channel.<br /><br />
+
+<b>irc.invite</b>( <u>nick</u>, <u>channel</u> )<br /><br />
+
+Invites someone to a channel.<br /><br />
+
+<b>chanlist = irc.get_channels</b>( )<br /><br />
+
+Retrieves a channel list, returned as an tuple( chanel name, user number, topic ) array.<br /><br />
+
+<b>topic = irc.get_topic</b>( <u>channel</u> )<br /><br />
+
+Retrieves the channel topic.<br /><br />
+
+<b>irc.set_topic</b>( <u>channel</u>, <u>topic</u> )<br /><br />
+
+Changes the channel topic.<br /><br />
+
+<b>irc.set_mode</b>( <u>mode</u> )<br /><br />
+
+Set's own mode.<br /><br />
+
+<b>irc.set_chanmode</b>( <u>channel</u>, <u>mode</u>, <u>data</u> = None )<br /><br />
+
+Changes the chanel mode aditional data goes throught data.<br /><br />
+
+<b>data = irc.whois</b>( <u>user</u> )<br /><br />
+<b>data = irc.whowas</b>( <u>user</u> )<br /><br />
+
+Retrieves data from current or former users, returned as a dictionary:<br /><br />
+{
+ 'server_info': Server information<br />
+ 'idle': 'seconds idle, signon time'<br />
+ 'real_name': Real user name<br />
+ 'channels': Array of channels where the user is ?<br />
+ 'nick': User nick<br />
+ 'host': Host address<br />
+ 'user': User name<br />
+ 'time': Time connected<br />
+ 'server': Server where is connected<br />
+}
