@@ -1,5 +1,6 @@
 =begin html
-<b>Python IRC Client</b><br />
+
+<h2>Python IRC Client</h2><br />
 
 To connect to the server, use <b>pyic.irc_client</b>, the object returned
 controls the irc session.<br /><br />
